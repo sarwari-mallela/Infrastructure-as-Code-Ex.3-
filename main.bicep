@@ -9,7 +9,7 @@ param webAppName string
 module containerRegistry 'modules/container-registry/registry/main.bicep' = { 
   name: '${uniqueString(deployment().name)}-acr'
   params: {
-    name: containerRegistryName
+    name: '${uniqueString(deployment().name)}-acr'
     location: location
     acrAdminUserEnabled: true
   }
@@ -19,7 +19,7 @@ module containerRegistry 'modules/container-registry/registry/main.bicep' = {
 module serverfarm 'modules/web/serverfarm/main.bicep' = {
   name: '${uniqueString(deployment().name)}-asp'
   params: {
-    name: appServicePlanName
+    name: '${uniqueString(deployment().name)}-asp'
     location: location
     sku: {
       capacity: 1
@@ -35,18 +35,18 @@ module serverfarm 'modules/web/serverfarm/main.bicep' = {
 module website 'modules/web/site/main.bicep' = {
   name: '${uniqueString(deployment().name)}-site'
   params: {
-    name: webAppName
+    name: '${uniqueString(deployment().name)}-site'
     location: location
     serverFarmResourceId: resourceId('Microsoft.Web/serverfarms', appServicePlanName)
     siteConfig: {
       linuxFxVersion: 'DOCKER|${containerRegistryName}.azurecr.io/${containerRegistryImageName}:${containerRegistryImageVersion}'
       appCommandLine: ''
     }
-    kind: 'app'
+    kind: 'app' // Add this line
     appSettingsKeyValuePairs: {
       WEBSITES_ENABLE_APP_SERVICE_STORAGE: false
     }
-    
+  }
 }
-}
+
 
