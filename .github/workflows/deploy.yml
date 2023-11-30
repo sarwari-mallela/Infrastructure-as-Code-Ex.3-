@@ -26,5 +26,4 @@ jobs:
         # Add some additional logging
         echo "Deployment completed"
 
-      # Add error handling
-      continue-on-error: true
+
