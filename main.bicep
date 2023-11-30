@@ -7,6 +7,7 @@ param webAppName string
 
 var acrName = '${containerRegistryName}acr'
 
+// containerRegistry deployment
 module containerRegistry 'modules/container-registry/registry/main.bicep' = { 
   name: acrName
   params: {
@@ -16,6 +17,7 @@ module containerRegistry 'modules/container-registry/registry/main.bicep' = {
   }
 }
 
+// appServicePlan deployment
 module serverfarm 'modules/web/serverfarm/main.bicep' = {
   name: '${uniqueString(deployment().name)}asp'
   params: {
@@ -32,6 +34,7 @@ module serverfarm 'modules/web/serverfarm/main.bicep' = {
   }
 }
 
+// webApp deployment
 module website 'modules/web/site/main.bicep' = {
   name: '${uniqueString(deployment().name)}site'
   params: {
