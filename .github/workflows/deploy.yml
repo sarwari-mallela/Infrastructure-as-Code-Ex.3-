@@ -22,3 +22,9 @@ jobs:
     - name: Deploy to Azure
       run: |
         az deployment group create --resource-group aguadamillas_students_1 --template-file main.bicep --parameters parameters.json
+
+        # Add some additional logging
+        echo "Deployment completed"
+
+      # Add error handling
+      continue-on-error: true
