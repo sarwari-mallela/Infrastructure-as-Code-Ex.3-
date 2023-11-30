@@ -6,8 +6,8 @@ param containerRegistryImageVersion string
 param appServicePlanName string
 param webAppName string
 
-module acr 'modules/container-registry/registry/main.bicep' = { 
-  name: '${uniqueString(deployment().name, location)}-acr'
+module containerRegistry 'modules/container-registry/registry/main.bicep' = { 
+  name: '${uniqueString(deployment().name)}-acr'
   params: {
     name: containerRegistryName
     location: location
@@ -15,10 +15,11 @@ module acr 'modules/container-registry/registry/main.bicep' = {
   }
 }
 
-module servicePlan 'modules/web/serverfarm/main.bicep' = {
-  name: '${uniqueString(deployment().name, location)}-sp'
+// didn't add kind: 'Linux'
+module serverfarm 'modules/web/serverfarm/main.bicep' = {
+  name: '${uniqueString(deployment().name)}-asp'
   params: {
-    name: 'my-service-plan'
+    name: appServicePlanName
     location: location
     sku: {
       capacity: 1
@@ -26,28 +27,26 @@ module servicePlan 'modules/web/serverfarm/main.bicep' = {
       name: 'B1'
       size: 'B1'
       tier: 'Basic'
-      kind: 'Linux'
-      reserved: true
     }
+    reserved: true
   }
 }
 
-module webApp 'modules/web/site/main.bicep' = {
-  name: webAppName
-  kind: 'app'
-  location: location
-  serverFarmResourceId: resourceId('Microsoft.Web/serverfarms', appServicePlanName)
-  siteConfig: {
-    linuxFxVersion: 'DOCKER|${containerRegistryName}.azurecr.io/${containerRegistryImageName}:${containerRegistryImageVersion}
-    appCommandLine: '' }
-  appSettingsKeyValuePairs: {
-    WEBSITES_ENABLE_APP_SERVICE_STORAGE: false
-    DOCKER_REGISTRY_SERVER_URL: 'https://${containerRegistryName}.azurecr.io'
-    DOCKER_REGISTRY_SERVER_USERNAME: 'acr-user'
-    DOCKER_REGISTRY_SERVER_PASSWORD: '$(acrOutputs.adminPassword)'
-  }
+module website 'modules/web/site/main.bicep' = {
+  name: '${uniqueString(deployment().name)}-site'
+  params: {
+    name: webAppName
+    location: location
+    serverFarmResourceId: resourceId('Microsoft.Web/serverfarms', appServicePlanName)
+    siteConfig: {
+      linuxFxVersion: 'DOCKER|${containerRegistryName}.azurecr.io/${containerRegistryImageName}:${containerRegistryImageVersion}'
+      appCommandLine: ''
+    }
+    kind: 'app'
+    appSettingsKeyValuePairs: {
+      WEBSITES_ENABLE_APP_SERVICE_STORAGE: false
+    }
+    
+}
 }
 
-output acrOutputs object = acr.outputs
-output servicePlanOutputs object = servicePlan.outputs
-output webAppOutputs object = webApp.outputs
