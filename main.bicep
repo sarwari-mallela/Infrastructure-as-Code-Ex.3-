@@ -7,9 +7,9 @@ param appServicePlanName string
 param webAppName string
 
 module containerRegistry 'modules/container-registry/registry/main.bicep' = { 
-  name: '${uniqueString(deployment().name)}-acr'
+  name: containerRegistryName
   params: {
-    name: '${uniqueString(deployment().name)}-acr'
+    name: containerRegistryName
     location: location
     acrAdminUserEnabled: true
   }
@@ -17,9 +17,9 @@ module containerRegistry 'modules/container-registry/registry/main.bicep' = {
 
 // didn't add kind: 'Linux'
 module serverfarm 'modules/web/serverfarm/main.bicep' = {
-  name: '${uniqueString(deployment().name)}-asp'
+  name: appServicePlanName
   params: {
-    name: '${uniqueString(deployment().name)}-asp'
+    name: appServicePlanName
     location: location
     sku: {
       capacity: 1
@@ -33,9 +33,9 @@ module serverfarm 'modules/web/serverfarm/main.bicep' = {
 }
 
 module website 'modules/web/site/main.bicep' = {
-  name: '${uniqueString(deployment().name)}-site'
+  name: webAppName
   params: {
-    name: '${uniqueString(deployment().name)}-site'
+    name: webAppName
     location: location
     serverFarmResourceId: resourceId('Microsoft.Web/serverfarms', appServicePlanName)
     siteConfig: {
