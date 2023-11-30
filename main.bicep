@@ -6,16 +6,16 @@ param containerRegistryImageVersion string
 param appServicePlanName string
 param webAppName string
 
-module acr 'modules/container-registry.bicep' = {
+module acr 'modules/container-registry/registry/main.bicep' = { 
   name: '${uniqueString(deployment().name, location)}-acr'
   params: {
     name: containerRegistryName
     location: location
-    acrAdminEnabled: true
+    acrAdminUserEnabled: true
   }
 }
 
-module servicePlan 'modules/service-plan-linux.bicep' = {
+module servicePlan 'modules/web/serverfarm/main.bicep' = {
   name: '${uniqueString(deployment().name, location)}-sp'
   params: {
     name: 'my-service-plan'
@@ -32,23 +32,19 @@ module servicePlan 'modules/service-plan-linux.bicep' = {
   }
 }
 
-module webApp 'modules/web-app-linux.bicep' = {
+module webApp 'modules/web/site/main.bicep' = {
   name: webAppName
-  params: {
-    name: webAppName
-    location: location
-    kind: 'app'
-    serverFarmResourceId: servicePlan.outputs.serverFarmResourceId
-    siteConfig: {
-      linuxFxVersion: 'DOCKER|${containerRegistryName}.azurecr.io/${containerRegistryImageName}:${containerRegistryImageVersion}'
-      appCommandLine: ''
-    }
-    appSettingsKeyValuePairs: {
-      WEBSITES_ENABLE_APP_SERVICE_STORAGE: false
-      DOCKER_REGISTRY_SERVER_URL: 'https://${containerRegistryName}.azurecr.io'
-      DOCKER_REGISTRY_SERVER_USERNAME: acr.outputs.adminUsername
-      DOCKER_REGISTRY_SERVER_PASSWORD: acr.outputs.adminPassword
-    }
+  kind: 'app'
+  location: location
+  serverFarmResourceId: resourceId('Microsoft.Web/serverfarms', appServicePlanName)
+  siteConfig: {
+    linuxFxVersion: 'DOCKER|${containerRegistryName}.azurecr.io/${containerRegistryImageName}:${containerRegistryImageVersion}
+    appCommandLine: " }
+  appSettingsKeyValuePairs: {
+    WEBSITES_ENABLE_APP_SERVICE_STORAGE: false
+    DOCKER_REGISTRY_SERVER_URL: 'https://${containerRegistryName}.azurecr.io'
+    DOCKER_REGISTRY_SERVER_USERNAME: 'acr-user'
+    DOCKER_REGISTRY_SERVER_PASSWORD: '$(acrOutputs.adminPassword)'
   }
 }
 
