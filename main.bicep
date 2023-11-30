@@ -39,7 +39,7 @@ module webApp 'modules/web/site/main.bicep' = {
   serverFarmResourceId: resourceId('Microsoft.Web/serverfarms', appServicePlanName)
   siteConfig: {
     linuxFxVersion: 'DOCKER|${containerRegistryName}.azurecr.io/${containerRegistryImageName}:${containerRegistryImageVersion}
-    appCommandLine: " }
+    appCommandLine: '' }
   appSettingsKeyValuePairs: {
     WEBSITES_ENABLE_APP_SERVICE_STORAGE: false
     DOCKER_REGISTRY_SERVER_URL: 'https://${containerRegistryName}.azurecr.io'
