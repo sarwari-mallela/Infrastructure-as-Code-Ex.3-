@@ -45,6 +45,9 @@ module website 'modules/web/site/main.bicep' = {
     kind: 'app'
     appSettingsKeyValuePairs: {
       WEBSITES_ENABLE_APP_SERVICE_STORAGE: false
+      DOCKER_REGISTRY_SERVER_URL: 'https://${acrName}.azurecr.io'
+      DOCKER_REGISTRY_SERVER_USERNAME: 'sarwaricR'
+      DOCKER_REGISTRY_SERVER_PASSWORD: 'GvOBnhMayVXorEG+I3gDcUoSg9FIiBOnK5V8XJ0S5Q+ACRDdxEXc'
     }
   }
 }
