@@ -1,0 +1,25 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "containerRegistryName": {
+        "value": "sarwari-cR"
+      },
+      "containerRegistryImageName": {
+        "value": "sarwari-cR-Image"
+      },
+      "containerRegistryImageVersion": {
+        "value": "sarwari-cR-Image-Version"
+      },
+      "appServicePlanName": {
+        "value": "sarwari-asp"
+      },
+      "webAppName": {
+        "value": "sarwari-webApp"
+      },
+      "location": {
+        "value" : 'UK West'
+      }
+    }
+  }
+  
