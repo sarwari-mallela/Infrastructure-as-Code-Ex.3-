@@ -1,17 +1,13 @@
-name: Build and Push Docker Image
+name: Azure Deployment
 
 on:
-    workflow_run:
-      workflows: ["Deploy to Azure"]
-      types:
-        - completed
-    push:
-      branches:
-        - main
-    workflow_dispatch:
-  
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
 jobs:
-  build-and-push:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,13 +19,12 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Docker Login to ACR
-      uses: azure/docker-login@v1
-      with:
-        login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
-        username: ${{ secrets.REGISTRY_USERNAME }}
-        password: ${{ secrets.REGISTRY_PASSWORD }}
+    # Step 1: Deploy Infrastructure
+    - name: Deploy Infrastructure
+      run: |
+        az deployment group create --resource-group aguadamillas_students_1 --template-file main.bicep --parameters parameters.json
 
+    # Step 2: Build and Push Docker Image to ACR
     - name: Set image version
       id: image-version
       run: echo "::set-output name=version::$(echo ${GITHUB_REF#refs/heads/})-$(date +'%Y.%m.%d.%H.%M')"
@@ -38,3 +33,10 @@ jobs:
       run: |
         docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.IMAGE_BASE_NAME }}:${{ steps.image-version.outputs.version }}
         docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.IMAGE_BASE_NAME }}:${{ steps.image-version.outputs.version }}
+
+    # Step 3: Deploy Docker Image to Azure Web App
+    - name: Deploy Docker Image to Azure Web App
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: ${{ secrets.WEBAPP_NAME }}
+        images: ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.IMAGE_BASE_NAME }}:${{ steps.image-version.outputs.version }}
