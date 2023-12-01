@@ -10,6 +10,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      REGISTRY_LOGIN_SERVER: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+      IMAGE_BASE_NAME: ${{ secrets.IMAGE_BASE_NAME }}
+
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
