@@ -27,7 +27,7 @@ jobs:
     # Step 2: Build and Push Docker Image to ACR
     - name: Set image version
       id: image-version
-      run: echo "::set-output name=version::$(echo ${GITHUB_REF#refs/heads/})-$(date +'%Y.%m.%d.%H.%M')"
+      run: echo "::set-output name=version::$(echo $GITHUB_REF | sed 's/refs\/heads\///')-$(date +'%Y.%m.%d.%H.%M')"
 
     - name: Build and push Docker image to ACR
       run: |
