@@ -27,14 +27,15 @@ jobs:
     # Step 2: Build and Push Docker Image to ACR
     - name: Set image version
       id: image-version
-      run: echo "::set-output name=version::$(echo $GITHUB_REF | sed 's/refs\/heads\///')-$(date +'%Y.%m.%d.%H.%M')"
-
-    - name: Build and push Docker image to ACR
+      run: echo "::set-output name=version::$(echo ${GITHUB_REF#refs/heads/})-$(date +'%Y.%m.%d.%H.%M')"
+    - name: 'Build and push image'
       run: |
-        docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.IMAGE_BASE_NAME }}:${{ steps.image-version.outputs.version }}
-        docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ secrets.IMAGE_BASE_NAME }}:${{ steps.image-version.outputs.version }}
-
-    # Step 3: Deploy Docker Image to Azure Web App
+        docker build . -t ${{ env.REGISTRY_LOGIN_SERVER }}/${{env.IMAGE_BASE_NAME}}:${{ steps.image-version.outputs.version }}
+        docker build . -t ${{ env.REGISTRY_LOGIN_SERVER }}/${{env.IMAGE_BASE_NAME}}:${{ github.ref_name }}-latest
+        docker push ${{ env.REGISTRY_LOGIN_SERVER }}/${{env.IMAGE_BASE_NAME}}:${{ steps.image-version.outputs.version }}
+        docker push ${{ env.REGISTRY_LOGIN_SERVER }}/${{env.IMAGE_BASE_NAME}}:${{ github.ref_name }}-latest
+   
+     # Step 3: Deploy Docker Image to Azure Web App
     - name: Deploy Docker Image to Azure Web App
       uses: azure/webapps-deploy@v3
       with:
