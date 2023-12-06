@@ -14,7 +14,6 @@ jobs:
       REGISTRY_LOGIN_SERVER: ${{ secrets.REGISTRY_LOGIN_SERVER }}
       IMAGE_BASE_NAME: ${{ secrets.IMAGE_BASE_NAME }}
 
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -33,6 +32,7 @@ jobs:
     - name: Set image version
       id: image-version
       run: echo "::set-output name=version::$(echo ${GITHUB_REF#refs/heads/})-$(date +'%Y.%m.%d.%H.%M')"
+    
     - name: 'Build and push image'
       run: |
         docker build . -t ${{ env.REGISTRY_LOGIN_SERVER }}/${{env.IMAGE_BASE_NAME}}:${{ steps.image-version.outputs.version }}
