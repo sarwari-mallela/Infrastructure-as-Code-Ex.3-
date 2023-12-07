@@ -4,7 +4,7 @@ param containerRegistryImageName string
 param containerRegistryImageVersion string
 param appServicePlanName string
 param webAppName string
-
+@secure()
 param DOCKER_REGISTRY_SERVER_URL string
 param DOCKER_REGISTRY_SERVER_USERNAME string
 param DOCKER_REGISTRY_SERVER_PASSWORD string
