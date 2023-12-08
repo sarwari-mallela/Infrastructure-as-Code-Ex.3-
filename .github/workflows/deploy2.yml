@@ -1,62 +1,137 @@
-name: Docker Build and Deploy
+name: Deploy to Azure from Docker too
 
 on:
-  workflow_run:
-    workflows: ["Deploy to Azure"]
-    types:
-        - completed
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 env:
-    ACR_USERNAME: 'sarwaricR'
-    ACR_PASSWORD: 'GvSuyJ218zWBJmr1uT8Phj4wIxddd1GHcDnGqnYxH4+ACRBMjANw'
-    ACR_LOGIN_SERVER: 'https://${containerRegistryName}.azurecr.io'
-    IMAGE_VERSION: 'sarwari3IV'   
+  RESOURCE_GROUP: aguadamillas_students_1
+  SUBSCRIPTION_ID: e0b9cada-61bc-4b5a-bd7a-52c606726b3b
+  USER_ALIAS: sarwari
+  REGISTRY_LOGIN_SERVER: DOCKER_REGISTRY_SERVER_URL
+  IMAGE_BASE_NAME: containerRegistryImageName
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@main
 
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Run Bicep linter
+        run: az bicep build --file ./key-vault.bicep
 
-      - name: Login to Azure Container Registry
+      - name: Run Bicep linter
+        run: az bicep build --file ./main.bicep
+
+      - name: Azure Docker Login
         uses: azure/docker-login@v1
         with:
-          login-server: <your-acr-login-server>
-          username: ${{ env.ACR_USERNAME }}
-          password: ${{ env.ACR_PASSWORD }}
+          login-server: ${{ env.REGISTRY_LOGIN_SERVER }}
+          username: DOCKER_REGISTRY_SERVER_USERNAME
+          password: DOCKER_REGISTRY_SERVER_PASSWORD
 
-      - name: Set image version
-        run: echo "::set-env name=IMAGE_VERSION::v1.${{ github.run_number }}"
+      - name: Set Image Version
+        id: image-version
+        run: echo "IMAGE_VERSION=$(date +'%Y.%m.%d.%H.%M')" >> $GITHUB_ENV
 
-      - name: Build and push Docker image
+      - name: Build and Push Docker Image
         run: |
-          docker build -t ${{ env.ACR_LOGIN_SERVER }}/flask-demo:${{ env.IMAGE_VERSION }} .
-          docker push ${{ env.ACR_LOGIN_SERVER }}/flask-demo:${{ env.IMAGE_VERSION }}
+          docker build . -t $REGISTRY_LOGIN_SERVER/$IMAGE_BASE_NAME:${{ steps.image-version.outputs.IMAGE_VERSION }}
+          docker build . -t $REGISTRY_LOGIN_SERVER/$IMAGE_BASE_NAME:${{ github.ref_name }}-latest
+          docker push $REGISTRY_LOGIN_SERVER/$IMAGE_BASE_NAME:${{ steps.image-version.outputs.IMAGE_VERSION }}
+          docker push $REGISTRY_LOGIN_SERVER/$IMAGE_BASE_NAME:${{ github.ref_name }}-latest
 
-  deploy-to-webapp:
+  deploy-dev:
     runs-on: ubuntu-latest
-
     needs: build-and-publish
 
     steps:
-      - name: Login to Azure
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Azure CLI
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy to Azure Web App
+      - name: Deploy to Dev
+        uses: azure/arm-deploy@v1.0.9
+        with:
+          subscriptionId: ${{ env.SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ env.RESOURCE_GROUP }}
+          template: ./deploy-dev.bicep
+          parameters: ./dev-parameters.json 
+          deploymentName: "${{ env.USER_ALIAS }}-dev"
+          failOnStdErr: false
+
+  deploy-uat:
+    runs-on: ubuntu-latest
+    needs: build-and-publish
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Azure CLI
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to UAT
+        uses: azure/arm-deploy@v1.0.9
+        with:
+          subscriptionId: ${{ env.SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ env.RESOURCE_GROUP }}
+          template: ./deploy-uat.bicep
+          parameters: ./uat-parameters.json 
+          deploymentName: "${{ env.USER_ALIAS }}-uat"
+          failOnStdErr: false
+
+  deploy-webapp-dev:
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Azure CLI
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Web App (Dev)
         uses: azure/webapps-deploy@v3
         with:
-          app-name: <your-web-app-name>
-          slot-name: production  # Use 'production' or specify your slot
+          app-name: your-dev-web-app-name
+          slot-name: dev
           images: |
-            registry: ${{ env.ACR_LOGIN_SERVER }}
-            repository: flask-demo
+            registry: ${{ env.REGISTRY_LOGIN_SERVER }}
+            repository: ${{ env.IMAGE_BASE_NAME }}
+            tag: ${{ needs.build-and-publish.outputs.IMAGE_VERSION }}
+
+  deploy-webapp-uat:
+    runs-on: ubuntu-latest
+    needs: deploy-uat
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Azure CLI
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Web App (UAT)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: your-uat-web-app-name
+          slot-name: uat
+          images: |
+            registry: ${{ env.REGISTRY_LOGIN_SERVER }}
+            repository: ${{ env.IMAGE_BASE_NAME }}
             tag: ${{ needs.build-and-publish.outputs.IMAGE_VERSION }}
