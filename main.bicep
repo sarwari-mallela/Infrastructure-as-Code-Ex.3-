@@ -1,12 +1,6 @@
 param location string
 param containerRegistryName string
-param containerRegistryImageName string
-param containerRegistryImageVersion string
 param appServicePlanName string
-param webAppName string
-
-
-// var acrName = '${containerRegistryName}acr'
 
 // containerRegistry deployment
 module containerRegistry 'modules/container-registry/registry/main.bicep' = { 
@@ -35,20 +29,3 @@ module serverfarm 'modules/web/serverfarm/main.bicep' = {
   }
 }
 
-// Azure Web App for Linux containers module
-module website 'modules/web/site/main.bicep' = {
-  name: webAppName
-  params: {
-    name: webAppName
-    location: location
-    serverFarmResourceId: resourceId('Microsoft.Web/serverfarms', appServicePlanName)
-    siteConfig: {
-      linuxFxVersion: 'DOCKER|${containerRegistryName}.azurecr.io/${containerRegistryImageName}:${containerRegistryImageVersion}'
-      appCommandLine: ''
-    }
-    kind: 'app'
-    appSettingsKeyValuePairs: {
-      WEBSITES_ENABLE_APP_SERVICE_STORAGE: false
-    }
-  }
-}
