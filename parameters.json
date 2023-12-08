@@ -3,10 +3,19 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
       "containerRegistryName": {
-        "value": "sarwaricR"
+        "value": "sarwari3-cR"
+      },
+      "containerRegistryImageName": {
+        "value": "sarwari3-image-name"
+      },
+      "containerRegistryImageVersion": {
+        "value": "sarwari3-image-version"
+      },
+      "webAppName": {
+        "value": "sarwari3-webApp"
       },
       "appServicePlanName": {
-        "value": "sarwari-asp"
+        "value": "sarwari3-asp"
       },
       "location": {
         "value" : "Germany West Central"
