@@ -35,16 +35,16 @@ jobs:
 
       - name: Set Image Version
         id: image-version
-        run: echo "IMAGE_VERSION=$(date +'%Y.%m.%d.%H.%M')" >> $GITHUB_ENV
+        run: echo "IMAGE_VERSION=$(date +'%Y.%m.%d.%H.%M')" 
 
       - name: Build and Push Docker Image
         run: |
           docker build . -t ${{env.REGISTRY_LOGIN_SERVER}}/${{env.IMAGE_BASE_NAME}}:${{ steps.image-version.outputs.IMAGE_VERSION }}
-          docker build . -t ${{env.REGISTRY_LOGIN_SERVER}}/${{env.IMAGE_BASE_NAME}}:${{ github.ref_name }}-latest
+          docker build . -t ${{env.REGISTRY_LOGIN_SERVER}}/${{env.IMAGE_BASE_NAME}}:latest
           docker push ${{env.REGISTRY_LOGIN_SERVER}}/${{env.IMAGE_BASE_NAME}}:${{ steps.image-version.outputs.IMAGE_VERSION }}
-          docker push ${{env.REGISTRY_LOGIN_SERVER}}/${{env.IMAGE_BASE_NAME}}:${{ github.ref_name }}-latest
+          docker push ${{env.REGISTRY_LOGIN_SERVER}}/${{env.IMAGE_BASE_NAME}}:latest
 
-  deploy-dev:
+  deploy:
     runs-on: ubuntu-latest
     needs: build-and-publish
 
@@ -62,37 +62,14 @@ jobs:
         with:
           subscriptionId: ${{ env.SUBSCRIPTION_ID }}
           resourceGroupName: ${{ env.RESOURCE_GROUP }}
-          template: ./deploy-dev.bicep
-          parameters: ./dev-parameters.json 
-          deploymentName: "${{ env.USER_ALIAS }}-dev"
+          template: ./main.bicep
+          parameters: ./parameters.json 
+          deploymentName: "${{ env.USER_ALIAS }}-ex3"
           failOnStdErr: false
 
-  deploy-uat:
+  deploy-webapp:
     runs-on: ubuntu-latest
-    needs: build-and-publish
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Set up Azure CLI
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy to UAT
-        uses: azure/arm-deploy@v1.0.9
-        with:
-          subscriptionId: ${{ env.SUBSCRIPTION_ID }}
-          resourceGroupName: ${{ env.RESOURCE_GROUP }}
-          template: ./deploy-uat.bicep
-          parameters: ./uat-parameters.json 
-          deploymentName: "${{ env.USER_ALIAS }}-uat"
-          failOnStdErr: false
-
-  deploy-webapp-dev:
-    runs-on: ubuntu-latest
-    needs: deploy-dev
+    needs: deploy
 
     steps:
       - name: Checkout repository
@@ -108,29 +85,6 @@ jobs:
         with:
           app-name: your-dev-web-app-name
           slot-name: dev
-          images: |
-            registry: ${{ env.REGISTRY_LOGIN_SERVER }}
-            repository: ${{ env.IMAGE_BASE_NAME }}
-            tag: ${{ needs.build-and-publish.outputs.IMAGE_VERSION }}
-
-  deploy-webapp-uat:
-    runs-on: ubuntu-latest
-    needs: deploy-uat
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Set up Azure CLI
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy to Azure Web App (UAT)
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: your-uat-web-app-name
-          slot-name: uat
           images: |
             registry: ${{ env.REGISTRY_LOGIN_SERVER }}
             repository: ${{ env.IMAGE_BASE_NAME }}
