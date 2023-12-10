@@ -10,6 +10,9 @@ env:
   RESOURCE_GROUP: aguadamillas_students_1
   SUBSCRIPTION_ID: e0b9cada-61bc-4b5a-bd7a-52c606726b3b
   USER_ALIAS: sarwari
+  KEY_VAULT_SECRET_NAME_ACR_USERNAME: keyVaultSecretNameACRUsername
+  KEY_VAULT_SECRET_NAME_ACR_PASSWORD: keyVaultSecretNameACRPassword1
+  KEY_VAULT_NAME: sarwariyo-keyvault
 
 jobs:
   build:
@@ -31,8 +34,16 @@ jobs:
     needs: build
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+    - uses: actions/checkout@main
+  
+    - name: 'Get docker registry credentials from Azure Key Vault'
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+          echo "REGISTRY_USERNAME=$(az keyvault secret show --name ${{ env.KEY_VAULT_SECRET_NAME_ACR_USERNAME }} --vault-name ${{ env.KEY_VAULT_NAME }} --query value -o tsv)" >> $GITHUB_ENV
+          echo "REGISTRY_PASSWORD=$(az keyvault secret show --name ${{ env.KEY_VAULT_SECRET_NAME_ACR_PASSWORD }} --vault-name ${{ env.KEY_VAULT_NAME }} --query value -o tsv)" >> $GITHUB_ENV
+  
+  
 
     - name: Set up Azure CLI
       uses: azure/login@v1
