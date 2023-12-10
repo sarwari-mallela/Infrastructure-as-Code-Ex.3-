@@ -140,6 +140,14 @@ param customerManagedKey customerManagedKeyType
 @description('Optional. Array of Cache Rules. Note: This is a preview feature ([ref](https://learn.microsoft.com/en-us/azure/container-registry/tutorial-registry-cache#cache-for-acr-preview)).')
 param cacheRules array = []
 
+param adminCredentialsKeyVaultResourceId string = ''
+@secure() 
+param adminCredentialsKeyVaultSecretUserName string = ''
+@secure() 
+param adminCredentialsKeyVaultSecretUserPassword1 string = ''
+@secure() 
+param adminCredentialsKeyVaultSecretUserPassword2 string = ''
+
 var formattedUserAssignedIdentities = reduce(map((managedIdentities.?userAssignedResourceIds ?? []), (id) => { '${id}': {} }), {}, (cur, next) => union(cur, next)) // Converts the flat array to an object like { '${id1}': {}, '${id2}': {} }
 
 var identity = !empty(managedIdentities) ? {

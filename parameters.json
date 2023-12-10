@@ -6,10 +6,10 @@
         "value": "sarwari3cR"
       },
       "containerRegistryImageName": {
-        "value": "sarwari3IN"
+        "value": "flask-demo"
       },
       "containerRegistryImageVersion": {
-        "value": "sarwari3IV"
+        "value": "latest"
       },
       "webAppName": {
         "value": "sarwari3webApp"
@@ -19,6 +19,9 @@
       },
       "location": {
         "value" : "Germany West Central"
+      },
+      "keyVaultName": {
+        "value" : "sarwariyo-keyvault"
       }
     }
   }

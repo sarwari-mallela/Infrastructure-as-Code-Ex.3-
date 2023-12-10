@@ -7,6 +7,9 @@
       },
       "location": {
         "value": "Germany West Central"
+      },
+      "containerRegistryName": {
+        "value": "sarwari-cr"
       }
     }
   }
